@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load role_tags %}
+
+{% block title %}Управління парами{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/schedule.css" rel="stylesheet">
+{% endblock %}
+
+{% block breadcrumb %}<strong>Управління парами</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Управління парами</h1>
+    <p class="page-subtitle">
+      {% if active_semester %}{{ active_semester.name }}{% else %}Активний семестр не обрано{% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'schedules:admin_timetable' %}" class="btn btn-outline-primary">
+      <i class="bi bi-calendar3-week me-1"></i>Тижневий вигляд
+    </a>
+    <a href="{% url 'schedules:schedule_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Додати пару
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+      <div class="filter-group">
+        <label class="form-label mb-1 small text-muted fw-semibold">СЕМЕСТР</label>
+        {{ filter_form.semester }}
+      </div>
+      <div class="filter-group">
+        <label class="form-label mb-1 small text-muted fw-semibold">ГРУПА</label>
+        {{ filter_form.group }}
+      </div>
+      <div class="filter-group">
+        <label class="form-label mb-1 small text-muted fw-semibold">ВИКЛАДАЧ</label>
+        {{ filter_form.teacher }}
+      </div>
+      <div class="filter-group">
+        <label class="form-label mb-1 small text-muted fw-semibold">ТИЖДЕНЬ</label>
+        {{ filter_form.week_type }}
+      </div>
+      <div class="filter-group">
+        <label class="form-label mb-1 small text-muted fw-semibold">ДЕНЬ</label>
+        {{ filter_form.weekday }}
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm px-3">
+        <i class="bi bi-filter"></i> Фільтрувати
+      </button>
+      <a href="{% url 'schedules:schedule_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-x"></i> Скинути
+      </a>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Група</th>
+          <th>Предмет</th>
+          <th>Викладач</th>
+          <th>День</th>
+          <th>Пара</th>
+          <th>Час</th>
+          <th>Тип заняття</th>
+          <th>Тиждень</th>
+          <th class="text-end">Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in schedules %}
+        <tr>
+          <td>
+            <span class="badge bg-light text-dark border">{{ s.group.name }}</span>
+            {% if s.subgroup %}
+            <span class="badge bg-secondary text-white ms-1">LAB {{ s.subgroup }}</span>
+            {% endif %}
+          </td>
+          <td class="fw-semibold">{{ s.subject.name }}</td>
+          <td class="text-muted">{{ s.teacher.get_short_name }}</td>
+          <td>{{ s.get_weekday_display }}</td>
+          <td class="text-center fw-bold">{{ s.lesson_number }}</td>
+          <td class="text-muted small">
+            {{ s.start_time|time:"H:i" }} – {{ s.end_time|time:"H:i" }}
+          </td>
+          <td>
+            <span class="badge
+              {% if s.lesson_type == 'lecture' %}bg-primary
+              {% elif s.lesson_type == 'lab' %}bg-success
+              {% else %}bg-warning text-dark{% endif %}">
+              {{ s.get_lesson_type_display }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if s.week_type == 'ODD' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+              {{ s.get_week_type_display }}
+            </span>
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{% url 'schedules:schedule_edit' s.pk %}" class="btn btn-outline-secondary" title="Редагувати">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'schedules:schedule_delete' s.pk %}" class="btn btn-outline-danger" title="Видалити">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-5">
+            <i class="bi bi-calendar-x d-block fs-2 mb-2"></i>
+            Пар не знайдено. Змініть фільтри або
+            <a href="{% url 'schedules:schedule_create' %}">додайте першу пару</a>.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if schedules %}
+  <div class="card-footer text-muted small">
+    Всього: {{ schedules|length }} пар
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

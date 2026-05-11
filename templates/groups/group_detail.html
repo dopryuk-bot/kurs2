@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Група {{ group.name }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'groups:list' %}" class="text-decoration-none text-muted">Групи</a>
+&nbsp;/&nbsp;<strong>{{ group.name }}</strong>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+  <div>
+    <h1 class="page-title mb-1">
+      <i class="bi bi-people me-2 text-primary"></i>Група {{ group.name }}
+    </h1>
+    <span class="badge bg-primary fs-6">{{ group.course }} курс</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'groups:edit' group.pk %}" class="btn btn-outline-primary">
+      <i class="bi bi-pencil me-1"></i>Редагувати
+    </a>
+    <a href="{% url 'groups:delete' group.pk %}" class="btn btn-outline-danger">
+      <i class="bi bi-trash me-1"></i>Видалити
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#eff6ff;color:#3b82f6">
+        <i class="bi bi-person-badge-fill"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ active_count }}</div>
+        <div class="stat-card-label">Активних студентів</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#f0fdf4;color:#22c55e">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ total_count }}</div>
+        <div class="stat-card-label">Всього студентів</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#fefce8;color:#ca8a04">
+        <i class="bi bi-star-fill"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ starostas|length }}</div>
+        <div class="stat-card-label">Старост</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Students -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold">
+          <i class="bi bi-person-lines-fill me-2 text-primary"></i>Студенти
+          <span class="badge bg-secondary ms-1">{{ active_count }}</span>
+        </span>
+        <div class="d-flex gap-2">
+          <a href="{% url 'groups:student_bulk' group.pk %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-list-ul me-1"></i>Масове додавання
+          </a>
+          <a href="{% url 'groups:student_add' group.pk %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Додати
+          </a>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        {% if active_students %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>ПІБ</th>
+                <th class="text-center">Підгрупа</th>
+                <th class="text-center">Статус</th>
+                <th class="text-end pe-3">Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in active_students %}
+              <tr>
+                <td class="text-muted small">{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ student.full_name }}</td>
+                <td class="text-center">
+                  {% if student.subgroup %}
+                  <span class="badge bg-primary">{{ student.subgroup }}</span>
+                  {% else %}
+                  <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success-subtle text-success">Активний</span>
+                </td>
+                <td class="text-end pe-3">
+                  <div class="btn-group btn-group-sm">
+                    <a href="{% url 'groups:student_edit' group.pk student.pk %}"
+                       class="btn btn-outline-primary" title="Редагувати">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'groups:student_delete' group.pk student.pk %}"
+                       class="btn btn-outline-danger" title="Видалити">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="py-4 text-center text-muted">
+          <i class="bi bi-person-plus fs-2 d-block mb-2 opacity-25"></i>
+          Студентів ще немає. <a href="{% url 'groups:student_add' group.pk %}">Додати першого</a>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if inactive_students %}
+      <div class="card-footer">
+        <details>
+          <summary class="text-muted small" style="cursor:pointer">
+            Деактивовані студенти ({{ inactive_students|length }})
+          </summary>
+          <div class="mt-2">
+            {% for student in inactive_students %}
+            <div class="d-flex align-items-center justify-content-between py-1 border-bottom">
+              <span class="text-muted">{{ student.full_name }}</span>
+              <a href="{% url 'groups:student_edit' group.pk student.pk %}"
+                 class="btn btn-sm btn-outline-secondary btn-sm">Активувати</a>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sidebar info -->
+  <div class="col-lg-4">
+    <!-- Starostas -->
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-star me-2 text-warning"></i>Старости
+      </div>
+      <div class="card-body">
+        {% if starostas %}
+        {% for sp in starostas %}
+        <div class="d-flex align-items-center gap-2 {% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
+          <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
+               style="width:38px;height:38px;font-size:14px;flex-shrink:0">
+            {{ sp.user.full_name|slice:":1" }}
+          </div>
+          <div>
+            <div class="fw-semibold small">{{ sp.user.full_name }}</div>
+            <div class="text-muted" style="font-size:0.75rem">{{ sp.user.email }}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if starostas|length < 2 %}
+        <div class="mt-2 pt-2 border-top">
+          <a href="{% url 'accounts:starosta_create' %}" class="btn btn-sm btn-outline-success w-100">
+            <i class="bi bi-plus-lg me-1"></i>Додати старосту
+          </a>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-muted small mb-2">Старости не призначені.</p>
+        <a href="{% url 'accounts:starosta_create' %}" class="btn btn-sm btn-outline-success w-100">
+          <i class="bi bi-plus-lg me-1"></i>Призначити старосту
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Quick info -->
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-info-circle me-2 text-primary"></i>Деталі
+      </div>
+      <div class="card-body">
+        <dl class="row small mb-0">
+          <dt class="col-6 text-muted">Назва</dt>
+          <dd class="col-6 fw-semibold">{{ group.name }}</dd>
+          <dt class="col-6 text-muted">Курс</dt>
+          <dd class="col-6">{{ group.course }}</dd>
+          <dt class="col-6 text-muted">Студентів</dt>
+          <dd class="col-6">{{ active_count }} / {{ total_count }}</dd>
+          <dt class="col-6 text-muted">Старост</dt>
+          <dd class="col-6">{{ starostas|length }} / 2</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

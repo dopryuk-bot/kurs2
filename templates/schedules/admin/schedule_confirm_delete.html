@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Видалити пару{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white fw-semibold">
+        <i class="bi bi-exclamation-triangle me-2"></i>Підтвердження видалення
+      </div>
+      <div class="card-body p-4">
+        <p class="mb-3">Ви справді хочете видалити цю пару?</p>
+        <div class="bg-light rounded p-3 mb-4">
+          <div><strong>Предмет:</strong> {{ object.subject.name }}</div>
+          <div><strong>Група:</strong> {{ object.group.name }}</div>
+          <div><strong>Викладач:</strong> {{ object.teacher.full_name }}</div>
+          <div><strong>День:</strong> {{ object.get_weekday_display }}</div>
+          <div><strong>Пара:</strong> {{ object.lesson_number }}</div>
+          <div><strong>Тиждень:</strong> {{ object.get_week_type_display }}</div>
+        </div>
+        <p class="text-danger small mb-4">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          Всі записи відвідування пов'язані з цією парою залишаться в системі.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger px-4">
+              <i class="bi bi-trash me-1"></i>Видалити
+            </button>
+            <a href="{% url 'schedules:schedule_list' %}" class="btn btn-outline-secondary">Скасувати</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/schedule.css" rel="stylesheet">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'schedules:schedule_list' %}" class="text-decoration-none text-muted">Пари</a>
+&nbsp;/&nbsp;<strong>{{ title }}</strong>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ title }}</h1>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold" for="{{ form.subject.id_for_label }}">
+                {{ form.subject.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.subject }}
+              {% for e in form.subject.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="{{ form.teacher.id_for_label }}">
+                {{ form.teacher.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.teacher }}
+              {% for e in form.teacher.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="{{ form.group.id_for_label }}">
+                {{ form.group.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.group }}
+              {% for e in form.group.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="{{ form.subgroup.id_for_label }}">
+                {{ form.subgroup.label }}
+              </label>
+              {{ form.subgroup }}
+              {% for e in form.subgroup.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-12">
+              <div class="form-check">
+                {{ form.create_parallel_subgroup }}
+                <label class="form-check-label" for="{{ form.create_parallel_subgroup.id_for_label }}">
+                  {{ form.create_parallel_subgroup.label }}
+                </label>
+              </div>
+              {% for e in form.create_parallel_subgroup.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div id="parallel-subgroup-fields" class="d-none">
+              <div class="col-12">
+                <div class="alert alert-info">
+                  <strong>Паралельна підгрупа</strong> — ця секція створює другу лабораторну пару для іншої підгрупи.
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.parallel_teacher.id_for_label }}">
+                  {{ form.parallel_teacher.label }}
+                </label>
+                {{ form.parallel_teacher }}
+                {% for e in form.parallel_teacher.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.parallel_lesson_number.id_for_label }}">
+                  {{ form.parallel_lesson_number.label }}
+                </label>
+                {{ form.parallel_lesson_number }}
+                {% for e in form.parallel_lesson_number.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.parallel_classroom.id_for_label }}">
+                  {{ form.parallel_classroom.label }}
+                </label>
+                {{ form.parallel_classroom }}
+                {% for e in form.parallel_classroom.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="{{ form.semester.id_for_label }}">
+                {{ form.semester.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.semester }}
+              {% for e in form.semester.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="{{ form.lesson_type.id_for_label }}">
+                {{ form.lesson_type.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.lesson_type }}
+              {% for e in form.lesson_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" for="{{ form.classroom.id_for_label }}">
+                {{ form.classroom.label }}
+              </label>
+              {{ form.classroom }}
+              {% for e in form.classroom.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" for="{{ form.weekday.id_for_label }}">
+                {{ form.weekday.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.weekday }}
+              {% for e in form.weekday.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" for="{{ form.lesson_number.id_for_label }}">
+                {{ form.lesson_number.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.lesson_number }}
+              {% for e in form.lesson_number.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" for="{{ form.week_type.id_for_label }}">
+                {{ form.week_type.label }} <span class="text-danger">*</span>
+              </label>
+              {{ form.week_type }}
+              {% for e in form.week_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>Зберегти
+            </button>
+            <a href="{% url 'schedules:schedule_list' %}" class="btn btn-outline-secondary">Скасувати</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script>
+      const parallelToggle = document.getElementById('{{ form.create_parallel_subgroup.id_for_label }}');
+      const parallelFields = document.getElementById('parallel-subgroup-fields');
+
+      function updateParallelFields() {
+        if (!parallelFields) return;
+        if (parallelToggle && parallelToggle.checked) {
+          parallelFields.classList.remove('d-none');
+        } else {
+          parallelFields.classList.add('d-none');
+        }
+      }
+
+      if (parallelToggle) {
+        parallelToggle.addEventListener('change', updateParallelFields);
+        updateParallelFields();
+      }
+    </script>
+  </div>
+
+  <!-- Info sidebar -->
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-clock me-2 text-primary"></i>Час пар
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr><th>№</th><th>Початок</th><th>Кінець</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>08:30</td><td>09:50</td></tr>
+            <tr><td>2</td><td>10:10</td><td>11:30</td></tr>
+            <tr><td>3</td><td>11:50</td><td>13:10</td></tr>
+            <tr><td>4</td><td>13:30</td><td>14:50</td></tr>
+            <tr><td>5</td><td>15:10</td><td>16:30</td></tr>
+            <tr><td>6</td><td>16:50</td><td>18:10</td></tr>
+            <tr><td>7</td><td>18:20</td><td>19:40</td></tr>
+            <tr><td>8</td><td>19:50</td><td>21:10</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-info-circle me-2 text-primary"></i>Типи тижнів
+      </div>
+      <div class="card-body">
+        <p class="mb-2">
+          <span class="badge bg-info text-dark me-2">ODD — Непарний</span>
+          1-й, 3-й, 5-й… тижні семестру
+        </p>
+        <p class="mb-0">
+          <span class="badge bg-warning text-dark me-2">EVEN — Парний</span>
+          2-й, 4-й, 6-й… тижні семестру
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

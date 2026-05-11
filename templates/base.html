@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="uk" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Електронний журнал ФМІ{% endblock %} — ЧНУ</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Project styles -->
+  <link href="/static/css/main.css" rel="stylesheet">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<!-- ═══ Sidebar ══════════════════════════════════════════════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <i class="bi bi-journal-bookmark-fill text-primary"></i>
+      <span class="sidebar-logo-text">Журнал ФМІ</span>
+    </div>
+    <button class="btn btn-link sidebar-toggle d-lg-none p-0 ms-auto"
+            id="sidebarClose" aria-label="Закрити меню">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="sidebar-role-badge">
+    {% if is_admin %}<span class="badge bg-danger">Адміністратор</span>
+    {% elif is_teacher %}<span class="badge bg-primary">Викладач</span>
+    {% elif is_starosta %}<span class="badge bg-success">Староста</span>
+    {% endif %}
+    <span class="sidebar-user-name">{{ user.get_short_name }}</span>
+  </div>
+
+  <ul class="sidebar-nav">
+
+    {% if is_starosta %}
+    <li class="sidebar-item">
+      <a href="{% url 'dashboard:starosta:index' %}" class="sidebar-link {% if request.resolver_match.url_name == 'index' and 'starosta' in request.resolver_match.namespace %}active{% endif %}">
+        <i class="bi bi-house"></i><span>Головна</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:starosta_week' %}" class="sidebar-link {% if 'starosta_week' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-calendar3-week"></i><span>Розклад</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'attendance:history' %}" class="sidebar-link {% if 'history' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="bi bi-journal-check"></i><span>Відвідуваність</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'analytics:starosta' %}" class="sidebar-link">
+        <i class="bi bi-bar-chart"></i><span>Статистика</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if is_teacher %}
+    <li class="sidebar-item">
+      <a href="{% url 'dashboard:teacher:index' %}" class="sidebar-link">
+        <i class="bi bi-house"></i><span>Головна</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:teacher_week' %}" class="sidebar-link">
+        <i class="bi bi-calendar3-week"></i><span>Мій розклад</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'analytics:teacher' %}" class="sidebar-link">
+        <i class="bi bi-bar-chart"></i><span>Статистика</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if is_admin %}
+    <li class="sidebar-item">
+      <a href="{% url 'dashboard:admin:index' %}" class="sidebar-link">
+        <i class="bi bi-speedometer2"></i><span>Огляд</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Розклад</li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:admin_general' %}" class="sidebar-link">
+        <i class="bi bi-grid-3x3-gap"></i><span>Загальний розклад</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:admin_timetable' %}" class="sidebar-link">
+        <i class="bi bi-calendar3-week"></i><span>Тижневий розклад</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:schedule_list' %}" class="sidebar-link">
+        <i class="bi bi-table"></i><span>Управління парами</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Управління</li>
+    <li class="sidebar-item">
+      <a href="{% url 'groups:list' %}" class="sidebar-link">
+        <i class="bi bi-people"></i><span>Групи</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'accounts:teacher_list' %}" class="sidebar-link">
+        <i class="bi bi-person-video2"></i><span>Викладачі</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'accounts:starosta_list' %}" class="sidebar-link">
+        <i class="bi bi-star"></i><span>Старости</span>
+      </a>
+    </li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:subject_list' %}" class="sidebar-link">
+        <i class="bi bi-journal-text"></i><span>Предмети</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Налаштування</li>
+    <li class="sidebar-item">
+      <a href="{% url 'schedules:semester_list' %}" class="sidebar-link">
+        <i class="bi bi-calendar-range"></i><span>Семестри</span>
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Аналітика</li>
+    <li class="sidebar-item">
+      <a href="{% url 'analytics:admin' %}" class="sidebar-link">
+        <i class="bi bi-bar-chart-line"></i><span>Статистика</span>
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user-info">
+      <div class="sidebar-avatar">{{ user.full_name|slice:":1" }}</div>
+      <div class="sidebar-user-details">
+        <div class="sidebar-user-full">{{ user.full_name }}</div>
+        <div class="sidebar-user-email">{{ user.email }}</div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn sidebar-logout-btn" title="Вийти">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </form>
+  </div>
+</nav>
+
+<!-- ═══ Overlay (mobile) ════════════════════════════════════════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ═══ Main layout ═════════════════════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <!-- Top Navbar -->
+  <header class="topbar">
+    <button class="btn btn-link topbar-toggler d-lg-none" id="sidebarOpen">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+    <div class="topbar-breadcrumb">
+      {% block breadcrumb %}{% endblock %}
+    </div>
+    <div class="topbar-right">
+      {% if active_semester %}
+      <span class="semester-chip">
+        <i class="bi bi-calendar-check me-1"></i>{{ active_semester.name }}
+      </span>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Flash messages -->
+  {% if messages %}
+  <div class="messages-container">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show mb-2" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Page content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div><!-- /main-wrapper -->
+
+{% else %}
+  <!-- Unauthenticated layout (login page, etc.) -->
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/main.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

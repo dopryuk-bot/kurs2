@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Семестри{% endblock %}
+{% block breadcrumb %}<strong>Семестри</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Семестри</h1>
+    <p class="page-subtitle">Активним вважається семестр, що містить сьогоднішню дату. Якщо таких немає — найновіший.</p>
+  </div>
+  <a href="{% url 'schedules:semester_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Новий семестр
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Семестр</th>
+          <th>Початок</th>
+          <th>Кінець</th>
+          <th>Перший тиждень</th>
+          <th>Статус</th>
+          <th class="text-end">Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sem in semesters %}
+        <tr>
+          <td class="fw-semibold">{{ sem.name }}</td>
+          <td>{{ sem.start_date|date:"d.m.Y" }}</td>
+          <td>{{ sem.end_date|date:"d.m.Y" }}</td>
+          <td class="text-muted">{{ sem.first_study_week_date|date:"d.m.Y" }}</td>
+          <td>
+            {% if sem == active_semester %}
+              <span class="badge bg-success">Поточний</span>
+            {% else %}
+              <span class="badge bg-secondary">Неактивний</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{% url 'schedules:semester_edit' sem.pk %}"
+               class="btn btn-outline-secondary btn-sm" title="Редагувати">
+              <i class="bi bi-pencil"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">Семестрів ще не додано</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

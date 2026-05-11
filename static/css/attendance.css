@@ -1,0 +1,96 @@
+/* ── Attendance Session Page ─────────────────────────────────────────── */
+
+.att-header-card {
+  border-left: 4px solid var(--bs-primary);
+}
+
+.att-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.att-meta {
+  font-size: .875rem;
+}
+
+/* Counter cards */
+.att-counter-card {
+  background: #fff;
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.att-counter-num {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.att-counter-label {
+  font-size: .75rem;
+  color: #64748b;
+  margin-top: .25rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+/* Status button group */
+.att-btn-group {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.att-btn {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  font-size: .85rem;
+  padding: 0;
+}
+
+.att-btn:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.att-btn-active-success {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #16a34a;
+}
+
+.att-btn-active-danger {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.att-btn-active-warning {
+  background: #fef9c3;
+  border-color: #eab308;
+  color: #ca8a04;
+}
+
+.att-btn-active-info {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0284c7;
+}
+
+/* Saving spinner overlay for individual rows */
+.att-saving {
+  opacity: .6;
+  pointer-events: none;
+}

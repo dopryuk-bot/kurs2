@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load role_tags %}
+
+{% block title %}Дашборд старости{% endblock %}
+{% block extra_css %}<link href="/static/css/schedule.css" rel="stylesheet">{% endblock %}
+{% block breadcrumb %}<strong>Головна</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title mb-0">
+      Вітаємо, {{ user.get_short_name }}!
+    </h1>
+    <p class="page-subtitle text-muted mt-1 mb-0">
+      {% if group %}Група {{ group.name }}{% endif %}
+      {% if semester %} · {{ semester.name }}{% endif %}
+    </p>
+  </div>
+  <a href="{% url 'schedules:starosta_week' %}" class="btn btn-primary">
+    <i class="bi bi-calendar3-week me-1"></i>Розклад
+  </a>
+</div>
+
+{% if today_sessions %}
+<!-- Today's classes — quick attendance links -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-clock text-primary me-2"></i>Заняття сьогодні
+  </div>
+  <div class="card-body p-0">
+    {% for sess in today_sessions %}
+    <a href="{% url 'attendance:session' sess.schedule.pk sess.date|date:'Y-m-d' %}"
+       class="d-flex align-items-center justify-content-between px-3 py-2 text-decoration-none text-dark border-bottom hover-bg">
+      <div>
+        <div class="fw-semibold">{{ sess.schedule.subject.name }}</div>
+        <div class="text-muted small">
+          {{ sess.schedule.start_time|time:"H:i" }}
+          · {{ sess.schedule.get_lesson_type_display }}
+          {% if sess.schedule.classroom %} · {{ sess.schedule.classroom }}{% endif %}
+        </div>
+      </div>
+      {% if sess.has_session %}
+      <span class="badge bg-success-subtle text-success ms-3">
+        <i class="bi bi-check-circle me-1"></i>Відмічено ({{ sess.att_count }})
+      </span>
+      {% else %}
+      <span class="badge bg-secondary-subtle text-secondary ms-3">
+        <i class="bi bi-pencil me-1"></i>Відмітити
+      </span>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- This week's timetable -->
+{% if rows %}
+<div class="card">
+  <div class="card-header fw-semibold d-flex align-items-center gap-2">
+    <i class="bi bi-calendar3-week text-primary"></i>
+    Розклад — цей тиждень
+    {% if is_odd %}<span class="badge bg-info text-dark ms-2">Непарний</span>
+    {% elif is_even %}<span class="badge bg-warning text-dark ms-2">Парний</span>
+    {% endif %}
+  </div>
+  <div class="timetable-wrapper">
+    <table class="timetable">
+      <thead>
+        <tr>
+          <th>Пара</th>
+          {% for col in columns %}
+          <th class="{% if col.is_today %}today-col{% endif %}">
+            {{ col.name }}<span class="th-date">{{ col.date|date:"d.m" }}</span>
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="time-cell">
+            <div class="lesson-num">{{ row.lesson_number }}</div>
+            <div class="lesson-time">{{ row.start_time|time:"H:i" }}<br>{{ row.end_time|time:"H:i" }}</div>
+          </td>
+          {% for cell in row.cells %}
+          <td class="slot-cell{% if cell.is_today %} today-col{% endif %}">
+            {% if cell.slots %}
+              {% for s in cell.slots %}
+              <a href="{% url 'attendance:session' s.pk cell.date|date:'Y-m-d' %}"
+                 class="schedule-card {{ s.lesson_type }} mb-2 d-block">
+                <div class="schedule-card-subject">{{ s.subject.name }}{% if s.subgroup %} (LAB {{ s.subgroup }}){% endif %}</div>
+                <div class="schedule-card-meta"><i class="bi bi-person"></i> {{ s.teacher.get_short_name }}</div>
+                <div class="schedule-card-type">
+                  <span class="badge text-white">{{ s.get_lesson_type_display }}</span>
+                </div>
+              </a>
+              {% endfor %}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-4 text-muted">
+    <i class="bi bi-calendar-x fs-2 d-block mb-2 opacity-25"></i>
+    На цей тиждень пар не знайдено.
+  </div>
+</div>
+{% endif %}
+{% endblock %}

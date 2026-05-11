@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load role_tags %}
+
+{% block title %}Розклад{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/schedule.css" rel="stylesheet">
+{% endblock %}
+
+{% block breadcrumb %}
+<strong>Розклад</strong>
+{% if week_type %}
+  &nbsp;·&nbsp;
+  {% if is_odd %}<span class="week-parity-badge week-parity-odd">Непарний тиждень</span>
+  {% else %}<span class="week-parity-badge week-parity-even">Парний тиждень</span>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if error %}
+<div class="alert alert-warning d-flex align-items-center gap-2">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+</div>
+
+{% else %}
+
+<!-- Page header -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      {% if view_mode == 'starosta' %}Розклад групи {{ group.name }}
+      {% elif view_mode == 'teacher' %}Мій розклад
+      {% else %}Тижневий розклад{% endif %}
+    </h1>
+    {% if semester %}<p class="page-subtitle">{{ semester.name }}</p>{% endif %}
+  </div>
+  {% if view_mode == 'admin' %}
+  <a href="{% url 'schedules:schedule_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Додати пару
+  </a>
+  {% endif %}
+</div>
+
+<!-- Week navigation -->
+<div class="week-nav">
+  <a href="?week={{ prev_monday|date:'Y-m-d' }}" class="btn btn-outline-secondary btn-sm px-3">
+    <i class="bi bi-chevron-left"></i>
+  </a>
+
+  <div class="week-nav-title">
+    <div class="week-dates">{{ monday|date:"d.m" }} – {{ friday|date:"d.m.Y" }}</div>
+    <div class="week-meta d-flex justify-content-center align-items-center gap-2 mt-1">
+      {% if week_number %}<span class="text-muted">{{ week_number }}-й тиждень</span>{% endif %}
+      {% if week_type %}
+        {% if is_odd %}<span class="week-parity-badge week-parity-odd">Непарний</span>
+        {% else %}<span class="week-parity-badge week-parity-even">Парний</span>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <a href="?week={{ next_monday|date:'Y-m-d' }}" class="btn btn-outline-secondary btn-sm px-3">
+    <i class="bi bi-chevron-right"></i>
+  </a>
+
+  <a href="?" class="btn btn-outline-primary btn-sm ms-2">Сьогодні</a>
+</div>
+
+<!-- Legend -->
+<div class="timetable-legend mb-3">
+  <span><span class="legend-dot" style="background:#3b82f6"></span>Лекція</span>
+  <span><span class="legend-dot" style="background:#22c55e"></span>Лабораторна</span>
+  <span><span class="legend-dot" style="background:#f59e0b"></span>Практика</span>
+</div>
+
+<!-- Timetable -->
+{% if rows %}
+<div class="card">
+  <div class="timetable-wrapper">
+    <table class="timetable">
+      <thead>
+        <tr>
+          <th>Пара</th>
+          {% for col in columns %}
+          <th class="{% if col.is_today %}today-col{% endif %}">
+            {{ col.name }}
+            <span class="th-date">{{ col.date|date:"d.m" }}</span>
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="time-cell">
+            <div class="lesson-num">{{ row.lesson_number }}</div>
+            <div class="lesson-time">
+              {{ row.start_time|time:"H:i" }}<br>{{ row.end_time|time:"H:i" }}
+            </div>
+          </td>
+          {% for cell in row.cells %}
+          <td class="slot-cell{% if cell.is_today %} today-col{% endif %}">
+            {% if cell.slots %}
+              {% for s in cell.slots %}
+              <a href="{% url 'attendance:session' s.pk cell.date|date:'Y-m-d' %}"
+                 class="schedule-card {{ s.lesson_type }} mb-2 d-block">
+                <div class="schedule-card-subject">
+                  {{ s.subject.name }}{% if s.subgroup %} (LAB {{ s.subgroup }}){% endif %}
+                </div>
+                <div class="schedule-card-meta">
+                  {% if view_mode == 'teacher' %}
+                    <i class="bi bi-people-fill"></i> {{ s.group.name }}
+                  {% else %}
+                    <i class="bi bi-person"></i> {{ s.teacher.get_short_name }}
+                  {% endif %}
+                </div>
+                <div class="schedule-card-type">
+                  <span class="badge text-white">{{ s.get_lesson_type_display }}{% if s.subgroup %} {{ s.subgroup }}{% endif %}</span>
+                </div>
+              </a>
+              {% endfor %}
+            {% else %}
+            <div class="slot-empty"></div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-calendar-x text-muted" style="font-size:3rem"></i>
+    <p class="text-muted mt-3 mb-1">На цей тиждень пар не знайдено.</p>
+    {% if view_mode == 'admin' %}
+    <a href="{% url 'schedules:schedule_create' %}" class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-plus-lg me-1"></i>Додати пару
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% endif %}{# /error #}
+{% endblock %}

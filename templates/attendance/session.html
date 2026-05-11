@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load role_tags %}
+
+{% block title %}Журнал — {{ schedule.subject.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/attendance.css" rel="stylesheet">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'attendance:history' %}" class="text-decoration-none text-muted">Відвідуваність</a>
+&nbsp;/&nbsp;<strong>{{ schedule.subject.name }}</strong>
+{% endblock %}
+
+{% block content %}
+
+<!-- Session header -->
+<div class="card att-header-card mb-4">
+  <div class="card-body">
+    <div class="row align-items-center g-3">
+      <div class="col-md-9">
+        <h2 class="att-title mb-2">{{ schedule.subject.name }}</h2>
+        <div class="att-meta d-flex flex-wrap gap-3 text-muted">
+          <span><i class="bi bi-calendar me-1"></i>{{ lesson_date|date:"d.m.Y, l" }}</span>
+          <span><i class="bi bi-clock me-1"></i>
+            {{ schedule.start_time|time:"H:i" }}{% if schedule.end_time %} – {{ schedule.end_time|time:"H:i" }}{% endif %}
+          </span>
+          <span><i class="bi bi-person me-1"></i>{{ schedule.teacher.full_name }}</span>
+          {% if schedule.classroom %}
+          <span><i class="bi bi-building me-1"></i>{{ schedule.classroom }}</span>
+          {% endif %}
+          <span>
+            <span class="badge bg-{{ schedule.lesson_type|lesson_type_color }} text-white">
+              {{ schedule.get_lesson_type_display }}{% if schedule.subgroup %} {{ schedule.subgroup }}{% endif %}
+            </span>
+          </span>
+          <span><i class="bi bi-people me-1"></i>{{ schedule.group.name }}{% if schedule.subgroup %} ({{ schedule.subgroup }}){% endif %}</span>
+        </div>
+      </div>
+      <div class="col-md-3 text-md-end">
+        <a href="{% url 'attendance:history' %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>До журналу
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Live summary counters -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="att-counter-card border-success">
+      <div class="att-counter-num text-success" id="cnt-PRESENT">{{ summary.PRESENT }}</div>
+      <div class="att-counter-label">Присутні</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="att-counter-card border-danger">
+      <div class="att-counter-num text-danger" id="cnt-ABSENT">{{ summary.ABSENT }}</div>
+      <div class="att-counter-label">Відсутні</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="att-counter-card border-warning">
+      <div class="att-counter-num text-warning" id="cnt-EXCUSED">{{ summary.EXCUSED }}</div>
+      <div class="att-counter-label">Поважна</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="att-counter-card border-info">
+      <div class="att-counter-num text-info" id="cnt-LATE">{{ summary.LATE }}</div>
+      <div class="att-counter-label">Запізнились</div>
+    </div>
+  </div>
+</div>
+
+<!-- Student attendance table -->
+<div class="card">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span>
+      <i class="bi bi-people me-2 text-primary"></i>Список студентів
+      <span class="text-muted fw-normal">— {{ summary.total }} осіб</span>
+    </span>
+    {% if created %}
+    <span class="badge bg-success-subtle text-success">
+      <i class="bi bi-check-circle me-1"></i>Сесію відкрито
+    </span>
+    {% endif %}
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:44px" class="text-center text-muted">#</th>
+            <th>Студент</th>
+            <th class="text-center d-none d-sm-table-cell" style="width:140px">Статус</th>
+            <th class="text-center" style="width:160px">Дія</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+          <tr id="row-{{ record.student.pk }}">
+            <td class="text-center text-muted small">{{ forloop.counter }}</td>
+            <td class="fw-semibold">{{ record.student.full_name }}</td>
+            <td class="text-center d-none d-sm-table-cell">
+              <span class="badge {{ record.status|status_badge }}" id="badge-{{ record.student.pk }}">
+                {{ record.get_status_display }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="att-btn-group" role="group" aria-label="Статус відвідування">
+                <button type="button"
+                  class="att-btn {% if record.status == 'PRESENT' %}att-btn-active-success{% endif %}"
+                  onclick="setStatus({{ record.student.pk }}, 'PRESENT')"
+                  title="Присутній">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+                <button type="button"
+                  class="att-btn {% if record.status == 'ABSENT' %}att-btn-active-danger{% endif %}"
+                  onclick="setStatus({{ record.student.pk }}, 'ABSENT')"
+                  title="Відсутній">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+                <button type="button"
+                  class="att-btn {% if record.status == 'EXCUSED' %}att-btn-active-warning{% endif %}"
+                  onclick="setStatus({{ record.student.pk }}, 'EXCUSED')"
+                  title="Поважна причина">
+                  <i class="bi bi-shield-check"></i>
+                </button>
+                <button type="button"
+                  class="att-btn {% if record.status == 'LATE' %}att-btn-active-info{% endif %}"
+                  onclick="setStatus({{ record.student.pk }}, 'LATE')"
+                  title="Запізнився">
+                  <i class="bi bi-clock-history"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted">
+              <i class="bi bi-people fs-2 d-block mb-2 opacity-25"></i>
+              У цій групі немає активних студентів.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const UPDATE_URL = "{{ update_url }}";
+const CSRF_TOKEN = "{{ csrf_token }}";
+
+const currentStatus = {};
+{% for record in records %}
+currentStatus[{{ record.student.pk }}] = "{{ record.status }}";
+{% endfor %}
+
+const BADGE_CLASSES = {
+  PRESENT: 'bg-success',
+  ABSENT: 'bg-danger',
+  EXCUSED: 'bg-warning text-dark',
+  LATE: 'bg-info text-dark',
+};
+
+
+const STATUS_LABELS = {
+  PRESENT: 'Присутній',
+  ABSENT: 'Відсутній',
+  EXCUSED: 'Поважна причина',
+  LATE: 'Запізнився',
+};
+
+const BTN_ACTIVE = {
+  PRESENT: 'att-btn-active-success',
+  ABSENT: 'att-btn-active-danger',
+  EXCUSED: 'att-btn-active-warning',
+  LATE: 'att-btn-active-info',
+};
+
+const STATUS_ORDER = ['PRESENT', 'ABSENT', 'EXCUSED', 'LATE'];
+
+function setStatus(studentId, newStatus) {
+  if (currentStatus[studentId] === newStatus) return;
+
+  const row = document.getElementById('row-' + studentId);
+  if (row) row.classList.add('att-saving');
+
+  fetch(UPDATE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': CSRF_TOKEN,
+    },
+    body: JSON.stringify({ student_id: studentId, status: newStatus }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.success) return;
+
+    const oldStatus = currentStatus[studentId];
+    currentStatus[studentId] = newStatus;
+
+    // Update badge
+    const badge = document.getElementById('badge-' + studentId);
+    if (badge) {
+      badge.className = 'badge ' + BADGE_CLASSES[newStatus];
+      badge.textContent = STATUS_LABELS[newStatus];
+    }
+
+    // Update button active states
+    if (row) {
+      row.classList.remove('att-saving');
+      const btns = row.querySelectorAll('.att-btn');
+      btns.forEach(btn => btn.classList.remove(...Object.values(BTN_ACTIVE)));
+      const idx = STATUS_ORDER.indexOf(newStatus);
+      if (idx >= 0 && btns[idx]) btns[idx].classList.add(BTN_ACTIVE[newStatus]);
+    }
+
+    // Update live counters
+    updateCounter(oldStatus, -1);
+    updateCounter(newStatus, 1);
+  })
+  .catch(() => {
+    if (row) row.classList.remove('att-saving');
+  });
+}
+
+function updateCounter(status, delta) {
+  const el = document.getElementById('cnt-' + status);
+  if (el) el.textContent = Math.max(0, parseInt(el.textContent || '0') + delta);
+}
+</script>
+{% endblock %}

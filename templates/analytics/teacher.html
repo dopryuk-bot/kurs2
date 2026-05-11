@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load role_tags %}
+
+{% block title %}Моя статистика{% endblock %}
+
+{% block breadcrumb %}<strong>Статистика</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title mb-0">Статистика відвідуваності</h1>
+    {% if semester %}
+    <p class="text-muted mt-1 mb-0">
+      <i class="bi bi-mortarboard me-1"></i>{{ semester.name }}
+    </p>
+    {% endif %}
+  </div>
+</div>
+
+{% if not semester %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle me-2"></i>Активний семестр не знайдено.
+</div>
+{% else %}
+
+<!-- Overall stats cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#eff6ff;color:#3b82f6">
+        <i class="bi bi-briefcase"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ stats_total }}</div>
+        <div class="stat-card-label">Всього занять</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#f0fdf4;color:#22c55e">
+        <i class="bi bi-person-check"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ stats_rate }}%</div>
+        <div class="stat-card-label">Загальна відвідуваність</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#f0fdf4;color:#22c55e">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ stats_present }}</div>
+        <div class="stat-card-label">Присутніх</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#fdf2f8;color:#ec4899">
+        <i class="bi bi-x-circle"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ stats_absent }}</div>
+        <div class="stat-card-label">Відсутніх</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-graph-up me-2 text-primary"></i>Тижнева тенденція (8 тижнів)
+      </div>
+      <div class="card-body">
+        <canvas id="trendChart" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Per-subject table -->
+{% if subject_stats %}
+<div class="card">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-table me-2 text-primary"></i>Статистика по предметах
+    <span class="text-muted fw-normal small ms-2">за поточний семестр</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Предмет</th>
+            <th class="text-center">Група</th>
+            <th class="text-center">Тип</th>
+            <th class="text-center">Присутні</th>
+            <th class="text-center">Відсутні</th>
+            <th class="text-center">Всього</th>
+            <th class="text-center">Відвідуваність</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in subject_stats %}
+          <tr>
+            <td class="fw-semibold">{{ stat.subject }}</td>
+            <td class="text-center">{{ stat.group }}</td>
+            <td class="text-center">
+              <span class="badge bg-primary">{{ stat.schedule.get_lesson_type_display }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-success">{{ stat.present }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-danger">{{ stat.absent }}</span>
+            </td>
+            <td class="text-center text-muted small">{{ stat.total }}</td>
+            <td class="text-center">
+              {% if stat.total > 0 %}
+              <div class="d-flex align-items-center gap-2">
+                <div class="flex-grow-1">
+                  <div class="progress" style="height:6px">
+                    <div class="progress-bar {% if stat.total > 0 %}{% widthratio stat.present stat.total 100 as rate %}{% if rate >= 75 %}bg-success{% elif rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}{% endif %}"
+                         style="width: {% widthratio stat.present stat.total 100 %}%"></div>
+                  </div>
+                </div>
+                <span class="fw-semibold small" style="min-width:42px">{% widthratio stat.present stat.total 100 %}%</span>
+              </div>
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-4 text-muted">
+    <i class="bi bi-bar-chart fs-1 d-block mb-2 opacity-25"></i>
+    Даних відвідуваності за поточний семестр ще немає.
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if semester %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: {{ chart_labels|safe }},
+    datasets: [
+      {
+        label: 'Присутні',
+        data: {{ chart_present|safe }},
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34,197,94,.12)',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Відсутні / Запізнились',
+        data: {{ chart_absent|safe }},
+        borderColor: '#f43f5e',
+        backgroundColor: 'rgba(244,63,94,.1)',
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { mode: 'index', intersect: false },
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+      x: { grid: { display: false } },
+    },
+  },
+});
+</script>
+{% endif %}
+{% endblock %}

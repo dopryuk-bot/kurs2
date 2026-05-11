@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Видалити старосту{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'accounts:starosta_list' %}" class="text-decoration-none text-muted">Старости</a>
+&nbsp;/&nbsp;<strong>Видалити</strong>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white fw-semibold">
+        <i class="bi bi-exclamation-triangle me-2"></i>Підтвердження видалення
+      </div>
+      <div class="card-body p-4">
+        <p>Ви справді хочете видалити старосту?</p>
+        <div class="bg-light rounded p-3 mb-2 fw-semibold">
+          <i class="bi bi-star me-2 text-warning"></i>{{ object.full_name }}
+        </div>
+        <div class="text-muted small mb-4">
+          {{ object.email }}
+          {% if object.starosta_profile %}— {{ object.starosta_profile.group.name }}{% endif %}
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger px-4">
+              <i class="bi bi-trash me-1"></i>Видалити
+            </button>
+            <a href="{% url 'accounts:starosta_list' %}" class="btn btn-outline-secondary">Скасувати</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

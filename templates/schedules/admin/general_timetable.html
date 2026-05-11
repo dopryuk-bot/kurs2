@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Загальний розклад{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/schedule.css" rel="stylesheet">
+<style>
+  .general-timetable {
+    font-size: 0.78rem;
+    table-layout: fixed;
+    border-collapse: collapse;
+    min-width: max-content;
+  }
+  .general-timetable th,
+  .general-timetable td {
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+    padding: 4px 6px;
+  }
+  .general-timetable thead th {
+    background: #f8f9fa;
+    text-align: center;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .col-lesson {
+    width: 70px;
+    min-width: 70px;
+    text-align: center;
+    font-weight: 600;
+    background: #f8f9fa;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+  .col-week {
+    width: 28px;
+    min-width: 28px;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: #f8f9fa;
+    position: sticky;
+    left: 70px;
+    z-index: 1;
+  }
+  .col-group {
+    width: 130px;
+    min-width: 130px;
+  }
+  .week-badge-odd {
+    color: #0d6efd;
+  }
+  .week-badge-even {
+    color: #fd7e14;
+  }
+  .lesson-card {
+    border-left: 3px solid transparent;
+    border-radius: 3px;
+    padding: 3px 5px;
+    background: #fff;
+    line-height: 1.3;
+  }
+  .lesson-card--lecture  { border-color: #0d6efd; background: #eff6ff; }
+  .lesson-card--lab      { border-color: #198754; background: #f0fdf4; }
+  .lesson-card--practice { border-color: #fd7e14; background: #fff8f0; }
+  .lesson-subject { font-weight: 600; font-size: 0.75rem; }
+  .lesson-teacher { color: #555; font-size: 0.7rem; }
+  .lesson-classroom { color: #888; font-size: 0.68rem; }
+  .lesson-badge {
+    font-size: 0.62rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 2px;
+  }
+  .badge-lecture  { background: #cfe2ff; color: #084298; }
+  .badge-lab      { background: #d1e7dd; color: #0a3622; }
+  .badge-practice { background: #ffe5cc; color: #7d3200; }
+  .row-odd td { background-color: #fafbff; }
+  .row-even td { background-color: #fffaf5; }
+  .timetable-section-header {
+    background: #e9ecef;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-top: 2px solid #dee2e6;
+  }
+  .lesson-time { font-size: 0.65rem; color: #6c757d; font-weight: 400; display: block; }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'schedules:schedule_list' %}" class="text-decoration-none text-muted">Пари</a>
+&nbsp;/&nbsp;<strong>Загальний розклад</strong>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center gap-3 flex-wrap">
+  <h1 class="page-title mb-0">Загальний розклад</h1>
+  {% if semester %}<span class="badge bg-secondary fs-6">{{ semester.name }}</span>{% endif %}
+</div>
+
+<!-- Weekday filter -->
+<div class="card mb-3">
+  <div class="card-body py-2 px-3">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="fw-semibold small text-muted me-1">День:</span>
+      <a href="{% url 'schedules:admin_general' %}"
+         class="btn btn-sm {% if selected_weekday is None %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        Всі дні
+      </a>
+      {% for val, label in weekday_choices %}
+      <a href="?weekday={{ val }}"
+         class="btn btn-sm {% if selected_weekday == val %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+</div>
+{% elif not sections %}
+<div class="alert alert-info">
+  <i class="bi bi-info-circle me-2"></i>У цьому семестрі ще немає розкладу.
+</div>
+{% else %}
+
+{% for section in sections %}
+<div class="card mb-4">
+  <div class="card-header fw-bold">
+    <i class="bi bi-calendar-day me-2 text-primary"></i>{{ section.weekday_label }}
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="general-timetable">
+        <thead>
+          <tr>
+            <th class="col-lesson">Пара</th>
+            <th class="col-week">Тиж.</th>
+            {% for g in groups %}
+            <th class="col-group text-center">{{ g.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in section.rows %}
+          <!-- ODD subrow -->
+          <tr class="row-odd">
+            <td class="col-lesson" rowspan="2">
+              {{ row.lesson_number }}
+              {% if row.start_time %}<span class="lesson-time">{{ row.start_time|time:"H:i" }}–{{ row.end_time|time:"H:i" }}</span>{% endif %}
+            </td>
+            <td class="col-week week-badge-odd" title="Непарний тиждень">Н</td>
+            {% for cell in row.cells %}
+            <td>
+              {% for s in cell.ODD %}
+              <div class="lesson-card lesson-card--{{ s.lesson_type }} mb-2">
+                <div class="lesson-subject">{{ s.subject.name }}{% if s.subgroup %} (LAB {{ s.subgroup }}){% endif %}</div>
+                <div class="lesson-teacher">{{ s.teacher.full_name }}</div>
+                {% if s.classroom %}<div class="lesson-classroom"><i class="bi bi-geo-alt"></i> {{ s.classroom }}</div>{% endif %}
+                <span class="lesson-badge badge-{{ s.lesson_type }}">{{ s.get_lesson_type_display }}</span>
+              </div>
+              {% endfor %}
+            </td>
+            {% endfor %}
+          </tr>
+          <!-- EVEN subrow -->
+          <tr class="row-even">
+            <td class="col-week week-badge-even" title="Парний тиждень">П</td>
+            {% for cell in row.cells %}
+            <td>
+              {% for s in cell.EVEN %}
+              <div class="lesson-card lesson-card--{{ s.lesson_type }} mb-2">
+                <div class="lesson-subject">{{ s.subject.name }}{% if s.subgroup %} (LAB {{ s.subgroup }}){% endif %}</div>
+                <div class="lesson-teacher">{{ s.teacher.full_name }}</div>
+                {% if s.classroom %}<div class="lesson-classroom"><i class="bi bi-geo-alt"></i> {{ s.classroom }}</div>{% endif %}
+                <span class="lesson-badge badge-{{ s.lesson_type }}">{{ s.get_lesson_type_display }}</span>
+              </div>
+              {% endfor %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'groups:list' %}" class="text-decoration-none text-muted">Групи</a>
+&nbsp;/&nbsp;
+<a href="{% url 'groups:detail' group.pk %}" class="text-decoration-none text-muted">{{ group.name }}</a>
+&nbsp;/&nbsp;<strong>{{ title }}</strong>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ title }}</h1>
+  <p class="page-subtitle">Група: <strong>{{ group.name }}</strong> ({{ group.course }} курс)</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="{{ form.full_name.id_for_label }}">
+              {{ form.full_name.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.full_name }}
+            {% for e in form.full_name.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="{{ form.subgroup.id_for_label }}">
+              {{ form.subgroup.label }}
+            </label>
+            {{ form.subgroup }}
+            {% for e in form.subgroup.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            <small class="text-muted d-block mt-1">Для розділення студентів на підгрупи А та Б на лабораторних заняттях</small>
+          </div>
+
+          {% if object and object.pk %}
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.is_active }}
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                {{ form.is_active.label }}
+              </label>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="d-flex gap-2 mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>Зберегти
+            </button>
+            <a href="{% url 'groups:detail' group.pk %}" class="btn btn-outline-secondary">Скасувати</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

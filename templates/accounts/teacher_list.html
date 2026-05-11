@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Викладачі{% endblock %}
+
+{% block breadcrumb %}<strong>Викладачі</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <h1 class="page-title mb-0">Викладачі</h1>
+  <a href="{% url 'accounts:teacher_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Новий викладач
+  </a>
+</div>
+
+<!-- Search -->
+<div class="card mb-3">
+  <div class="card-body py-2 px-3">
+    <form method="get" class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm" style="max-width:320px">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ q }}" class="form-control border-start-0 ps-0"
+               placeholder="ПІБ, email або кафедра...">
+      </div>
+      <button type="submit" class="btn btn-sm btn-outline-secondary">Пошук</button>
+      {% if q %}
+      <a href="{% url 'accounts:teacher_list' %}" class="btn btn-sm btn-link text-secondary">
+        <i class="bi bi-x-circle"></i> Скинути
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span class="fw-semibold">
+      Список викладачів
+      <span class="badge bg-secondary ms-2">{{ total_count }}</span>
+    </span>
+  </div>
+  <div class="card-body p-0">
+    {% if teachers %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ПІБ</th>
+            <th>Email</th>
+            <th>Кафедра</th>
+            <th class="text-center">Статус</th>
+            <th class="text-end pe-3">Дії</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for teacher in teachers %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                     style="width:36px;height:36px;font-size:13px;flex-shrink:0">
+                  {{ teacher.full_name|slice:":1" }}
+                </div>
+                <span class="fw-semibold">{{ teacher.full_name }}</span>
+              </div>
+            </td>
+            <td class="text-muted small">{{ teacher.email }}</td>
+            <td class="small">{{ teacher.teacher_profile.department|default:"—" }}</td>
+            <td class="text-center">
+              {% if teacher.is_active %}
+              <span class="badge bg-success-subtle text-success">Активний</span>
+              {% else %}
+              <span class="badge bg-secondary-subtle text-secondary">Деактивований</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'accounts:teacher_edit' teacher.pk %}" class="btn btn-outline-primary" title="Редагувати">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'accounts:teacher_delete' teacher.pk %}" class="btn btn-outline-danger" title="Видалити">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="py-5 text-center text-muted">
+      <i class="bi bi-person-video2 fs-1 d-block mb-3 opacity-25"></i>
+      {% if q %}Викладачів за запитом не знайдено{% else %}Викладачів ще немає{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if is_paginated %}
+  <div class="card-footer">
+    <nav><ul class="pagination pagination-sm mb-0 justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">«</a>
+      </li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>
+      </li>
+      {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">»</a>
+      </li>
+      {% endif %}
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

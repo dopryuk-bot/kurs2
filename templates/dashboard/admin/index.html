@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Панель адміністратора{% endblock %}
+
+{% block breadcrumb %}<strong>Огляд системи</strong>{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-card-link { text-decoration: none; color: inherit; display: block; transition: transform .15s; }
+  .stat-card-link:hover .stat-card { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); }
+  .quick-action { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    border-radius: 8px; text-decoration: none; color: #1e293b; transition: background .15s; }
+  .quick-action:hover { background: #f1f5f9; color: #1e293b; }
+  .quick-action-icon { width: 36px; height: 36px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Панель адміністратора</h1>
+    <p class="page-subtitle text-muted">
+      {% if semester %}
+      <i class="bi bi-calendar-check me-1"></i>{{ semester.name }}
+      {% else %}
+      Активний семестр не обрано
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<!-- Stats cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <a href="{% url 'groups:list' %}" class="stat-card-link">
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:#eff6ff;color:#3b82f6">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <div class="stat-card-value">{{ groups_count }}</div>
+          <div class="stat-card-label">Груп</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#f0fdf4;color:#22c55e">
+        <i class="bi bi-person-badge-fill"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ students_count }}</div>
+        <div class="stat-card-label">Студентів</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{% url 'accounts:teacher_list' %}" class="stat-card-link">
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:#fefce8;color:#ca8a04">
+          <i class="bi bi-person-video2"></i>
+        </div>
+        <div>
+          <div class="stat-card-value">{{ teachers_count }}</div>
+          <div class="stat-card-label">Викладачів</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{% url 'accounts:starosta_list' %}" class="stat-card-link">
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:#fdf4ff;color:#a855f7">
+          <i class="bi bi-star-fill"></i>
+        </div>
+        <div>
+          <div class="stat-card-value">{{ starostas_count }}</div>
+          <div class="stat-card-label">Старост</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Second row stats -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#fff1f2;color:#f43f5e">
+        <i class="bi bi-clock-fill"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">{{ today_lessons_count }}</div>
+        <div class="stat-card-label">Пар сьогодні</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#ecfdf5;color:#10b981">
+        <i class="bi bi-check2-circle"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">
+          {% if today_att_total > 0 %}
+          {{ today_att_present }}/{{ today_att_total }}
+          {% else %}—{% endif %}
+        </div>
+        <div class="stat-card-label">Відвідуваність сьогодні</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Attendance chart -->
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold"><i class="bi bi-graph-up me-2 text-primary"></i>Тенденція відвідуваності</span>
+        <a href="{% url 'analytics:admin' %}" class="btn btn-sm btn-outline-secondary">
+          Детальніше <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+      <div class="card-body">
+        <canvas id="attendanceChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions + Recent groups -->
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-lightning me-2 text-warning"></i>Швидкі дії
+      </div>
+      <div class="card-body p-2">
+        <a href="{% url 'groups:create' %}" class="quick-action">
+          <div class="quick-action-icon" style="background:#eff6ff;color:#3b82f6">
+            <i class="bi bi-people"></i>
+          </div>
+          <span>Нова група</span>
+        </a>
+        <a href="{% url 'accounts:teacher_create' %}" class="quick-action">
+          <div class="quick-action-icon" style="background:#fefce8;color:#ca8a04">
+            <i class="bi bi-person-video2"></i>
+          </div>
+          <span>Новий викладач</span>
+        </a>
+        <a href="{% url 'accounts:starosta_create' %}" class="quick-action">
+          <div class="quick-action-icon" style="background:#fdf4ff;color:#a855f7">
+            <i class="bi bi-star"></i>
+          </div>
+          <span>Новий(а) Староста</span>
+        </a>
+        <a href="{% url 'schedules:schedule_create' %}" class="quick-action">
+          <div class="quick-action-icon" style="background:#f0fdf4;color:#22c55e">
+            <i class="bi bi-calendar-plus"></i>
+          </div>
+          <span>Додати пару</span>
+        </a>
+        <a href="{% url 'schedules:subject_create' %}" class="quick-action">
+          <div class="quick-action-icon" style="background:#fff1f2;color:#f43f5e">
+            <i class="bi bi-journal-plus"></i>
+          </div>
+          <span>Новий предмет</span>
+        </a>
+        <a href="{% url 'schedules:semester_create' %}" class="quick-action">
+          <div class="quick-action-icon" style="background:#ecfdf5;color:#10b981">
+            <i class="bi bi-calendar-range"></i>
+          </div>
+          <span>Новий семестр</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent groups -->
+    {% if recent_groups %}
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-clock-history me-2 text-muted"></i>Останні групи
+      </div>
+      <div class="card-body p-0">
+        {% for g in recent_groups %}
+        <a href="{% url 'groups:detail' g.pk %}"
+           class="d-flex align-items-center justify-content-between px-3 py-2 text-decoration-none text-dark border-bottom hover-bg">
+          <span class="fw-semibold small">{{ g.name }}</span>
+          <span class="badge bg-secondary-subtle text-secondary">{{ g.active_student_count }} ст.</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const ctx = document.getElementById('attendanceChart');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{ chart_labels|safe }},
+    datasets: [
+      {
+        label: 'Присутні',
+        data: {{ chart_present|safe }},
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34,197,94,.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#22c55e',
+      },
+      {
+        label: 'Відсутні / Запізнились',
+        data: {{ chart_absent|safe }},
+        borderColor: '#f43f5e',
+        backgroundColor: 'rgba(244,63,94,.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#f43f5e',
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { mode: 'index', intersect: false },
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+      x: { grid: { display: false } },
+    },
+  },
+});
+</script>
+{% endblock %}

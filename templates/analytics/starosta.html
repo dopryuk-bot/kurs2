@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load role_tags %}
+
+{% block title %}Статистика відвідуваності{% endblock %}
+
+{% block breadcrumb %}<strong>Статистика</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h1 class="page-title mb-0">Статистика відвідуваності</h1>
+    {% if group or semester %}
+    <p class="text-muted mt-1 mb-0">
+      {% if group %}<i class="bi bi-people me-1"></i>{{ group.name }}{% endif %}
+      {% if semester %} · {{ semester.name }}{% endif %}
+    </p>
+    {% endif %}
+  </div>
+</div>
+
+{% if not semester %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle me-2"></i>Активний семестр не знайдено.
+</div>
+{% else %}
+
+<!-- Period summary cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#f0fdf4;color:#22c55e">
+        <i class="bi bi-calendar-day"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">
+          {% if stats_day.total > 0 %}{% widthratio stats_day.present stats_day.total 100 %}%{% else %}—{% endif %}
+        </div>
+        <div class="stat-card-label">Сьогодні</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#eff6ff;color:#3b82f6">
+        <i class="bi bi-calendar3-week"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">
+          {% if stats_week.total > 0 %}{% widthratio stats_week.present stats_week.total 100 %}%{% else %}—{% endif %}
+        </div>
+        <div class="stat-card-label">Цей тиждень</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#fefce8;color:#ca8a04">
+        <i class="bi bi-calendar-month"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">
+          {% if stats_month.total > 0 %}{% widthratio stats_month.present stats_month.total 100 %}%{% else %}—{% endif %}
+        </div>
+        <div class="stat-card-label">Цей місяць</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#fdf4ff;color:#a855f7">
+        <i class="bi bi-award"></i>
+      </div>
+      <div>
+        <div class="stat-card-value">
+          {% if stats_semester.total > 0 %}{% widthratio stats_semester.present stats_semester.total 100 %}%{% else %}—{% endif %}
+        </div>
+        <div class="stat-card-label">Семестр</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-graph-up me-2 text-primary"></i>Тижнева тенденція (8 тижнів)
+      </div>
+      <div class="card-body">
+        <canvas id="trendChart" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-pie-chart me-2 text-primary"></i>Розподіл за семестр
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="distChart" style="max-height:220px"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Per-student table -->
+{% if student_stats %}
+<div class="card">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-table me-2 text-primary"></i>Статистика по студентах
+    <span class="text-muted fw-normal small ms-2">за поточний семестр</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Студент</th>
+            <th class="text-center">Відвідуваність</th>
+            <th class="text-center d-none d-md-table-cell">
+              <span class="badge bg-success">П</span>
+            </th>
+            <th class="text-center d-none d-md-table-cell">
+              <span class="badge bg-danger">В</span>
+            </th>
+            <th class="text-center d-none d-md-table-cell">
+              <span class="badge bg-warning text-dark">П/П</span>
+            </th>
+            <th class="text-center d-none d-md-table-cell">
+              <span class="badge bg-info text-dark">З</span>
+            </th>
+            <th class="text-center text-muted small">Всього</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in student_stats %}
+          <tr>
+            <td class="fw-semibold">{{ s.student.full_name }}</td>
+            <td class="text-center">
+              <div class="d-flex align-items-center gap-2">
+                <div class="flex-grow-1">
+                  <div class="progress" style="height:6px">
+                    <div class="progress-bar {% if s.rate >= 75 %}bg-success{% elif s.rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                         style="width:{{ s.rate }}%"></div>
+                  </div>
+                </div>
+                <span class="fw-semibold small" style="min-width:42px">{{ s.rate }}%</span>
+              </div>
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              <span class="badge bg-success">{{ s.present }}</span>
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              <span class="badge bg-danger">{{ s.absent }}</span>
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              <span class="badge bg-warning text-dark">{{ s.excused }}</span>
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              <span class="badge bg-info text-dark">{{ s.late }}</span>
+            </td>
+            <td class="text-center text-muted small">{{ s.total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-4 text-muted">
+    <i class="bi bi-bar-chart fs-1 d-block mb-2 opacity-25"></i>
+    Даних відвідуваності за поточний семестр ще немає.
+  </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if semester %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: {{ chart_labels|safe }},
+    datasets: [
+      {
+        label: 'Присутні',
+        data: {{ chart_present|safe }},
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34,197,94,.12)',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Відсутні / Запізнились',
+        data: {{ chart_absent|safe }},
+        borderColor: '#f43f5e',
+        backgroundColor: 'rgba(244,63,94,.1)',
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { mode: 'index', intersect: false },
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+      x: { grid: { display: false } },
+    },
+  },
+});
+
+new Chart(document.getElementById('distChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Присутні', 'Відсутні', 'Поважна', 'Запізнились'],
+    datasets: [{
+      data: {{ chart_dist_data|safe }},
+      backgroundColor: ['#22c55e', '#f43f5e', '#ca8a04', '#3b82f6'],
+      borderWidth: 2,
+      borderColor: '#fff',
+    }],
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    cutout: '60%',
+  },
+});
+</script>
+{% endif %}
+{% endblock %}

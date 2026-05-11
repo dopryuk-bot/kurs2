@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Предмети{% endblock %}
+
+{% block breadcrumb %}<strong>Предмети</strong>{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <h1 class="page-title mb-0">Предмети</h1>
+  <a href="{% url 'schedules:subject_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Новий предмет
+  </a>
+</div>
+
+<!-- Search -->
+<div class="card mb-3">
+  <div class="card-body py-2 px-3">
+    <form method="get" class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm" style="max-width:300px">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ q }}" class="form-control border-start-0 ps-0"
+               placeholder="Назва предмету...">
+      </div>
+      <button type="submit" class="btn btn-sm btn-outline-secondary">Пошук</button>
+      {% if q %}
+      <a href="{% url 'schedules:subject_list' %}" class="btn btn-sm btn-link text-secondary">
+        <i class="bi bi-x-circle"></i> Скинути
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span class="fw-semibold">
+      Список предметів
+      <span class="badge bg-secondary ms-2">{{ total_count }}</span>
+    </span>
+  </div>
+  <div class="card-body p-0">
+    {% if subjects %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Назва</th>
+            <th>Опис</th>
+            <th class="text-center">Пар у розкладі</th>
+            <th class="text-end pe-3">Дії</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for subject in subjects %}
+          <tr>
+            <td class="fw-semibold">
+              <i class="bi bi-journal-text me-1 text-primary"></i>{{ subject.name }}
+            </td>
+            <td class="text-muted small">{{ subject.description|truncatechars:80|default:"—" }}</td>
+            <td class="text-center">
+              <span class="badge bg-secondary-subtle text-secondary">{{ subject.schedules_count }}</span>
+            </td>
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'schedules:subject_edit' subject.pk %}" class="btn btn-outline-primary" title="Редагувати">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'schedules:subject_delete' subject.pk %}" class="btn btn-outline-danger" title="Видалити">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="py-5 text-center text-muted">
+      <i class="bi bi-journal-text fs-1 d-block mb-3 opacity-25"></i>
+      {% if q %}Предметів за запитом не знайдено{% else %}Предметів ще немає{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if is_paginated %}
+  <div class="card-footer">
+    <nav><ul class="pagination pagination-sm mb-0 justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">«</a>
+      </li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}">{{ num }}</a>
+      </li>
+      {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">»</a>
+      </li>
+      {% endif %}
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
